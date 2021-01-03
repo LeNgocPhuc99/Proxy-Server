@@ -5,9 +5,6 @@ OBJ_FILES := $(patsubst %.c,%.o,$(C_FILES))
 
 all: proxy
 
-install: proxy
-	cp proxy ..
-
 clean:
 	rm $(OBJ_FILES)
 	rm proxy
