@@ -2,6 +2,7 @@ C_FILES := $(wildcard *.c)
 HEADER_FILES := $(wildcard *.h)
 OBJ_FILES := $(patsubst %.c,%.o,$(C_FILES))
 
+CC := gcc
 
 all: proxy
 
