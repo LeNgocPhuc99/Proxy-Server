@@ -6,6 +6,7 @@
 #include <sys/epoll.h>
 #include <netdb.h>
 #include <string.h>
+#include <stdbool.h>
 
 
 #include "epoll_interface.h"
@@ -21,6 +22,7 @@
 struct client_socket_event_data
 {
     struct epoll_event_handler* backend_handler;
+    char* backend_addr;
 };
 
 void close_client_socket(struct epoll_event_handler* self)
@@ -77,6 +79,60 @@ struct epoll_event_handler* connect_to_backend(struct epoll_event_handler* clien
     return backend_socket_event_handler;
 }
 
+bool make_request(char* buffer, char* backend_addr)
+{
+
+    char command[BUFFER_SIZE];                  // GET
+    char url[BUFFER_SIZE];                      // http://example.com/
+    char http[BUFFER_SIZE];                     // HTTP/1.1
+    char host[BUFFER_SIZE];                     // example.com
+    char temp[BUFFER_SIZE];                     // http://example.com/
+    char *entry;
+
+    bool flag = false;
+
+    sscanf(buffer, "%s %s %s", command, url, http);
+    if(strcmp(command,"GET") == 0)
+    {
+        strcpy(temp, url);
+
+        // get hostname
+        entry = strtok(buffer, "//");
+        entry = strtok(NULL, "/");
+        strcpy(host, entry);
+
+        if(strcmp(host, "172.16.45.130") != 0)
+        {
+            return flag;
+        }
+        else
+        {
+            bzero(host, BUFFER_SIZE);
+            strcpy(host, backend_addr);
+        }
+        entry = strtok(temp, "//");
+        entry = strtok(NULL, "/");
+        entry = strtok(NULL, "\0");
+
+        // make request
+        bzero(buffer, BUFFER_SIZE);
+        if(entry == NULL)
+        {   
+            sprintf(buffer, "%s / %s\r\nHost: %s\r\nConnection: keep-alive\r\n\r\n", command, http, host);
+        }
+        else
+        {
+            sprintf(buffer, "%s /%s %s\r\nHost: %s\r\nConnection: keep-alive\r\n\r\n", command, entry, http, host);
+        }
+        printf("Request:\n %s", buffer);
+        flag = true;
+        return flag;
+    }
+    else
+    {
+        return flag;
+    } 
+}
 
 void handle_client_socket_event(struct epoll_event_handler* self, uint32_t events)
 {
@@ -98,7 +154,8 @@ void handle_client_socket_event(struct epoll_event_handler* self, uint32_t event
             return;
         }
 
-        write(closure->backend_handler->fd, buffer, bytes_read);
+        if(make_request(buffer, closure->backend_addr))
+            write(closure->backend_handler->fd, buffer, bytes_read);
     }
 
     if ((events & EPOLLERR) | (events & EPOLLHUP) | (events & EPOLLRDHUP)) {
@@ -123,6 +180,6 @@ struct epoll_event_handler* create_client_socket_handler(int client_socket_fd, i
     result->closure = closure;
 
     closure->backend_handler = connect_to_backend(result, epoll_fd, backend_addr, backend_port);
-
+    closure->backend_addr = backend_addr;
     return result;
 };
