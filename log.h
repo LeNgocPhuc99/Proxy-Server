@@ -1,20 +1,11 @@
-/* lightweight logging library */
 #ifndef LOG_H_
 #define LOG_H_
 
-typedef enum {
-    LOG_ERRORS,
-    LOG_EVERYTHING
-} log_level;
-
-/* other functions */
-void log_init(const char* path, const char* filename, const char* file_extension);
-void log_set_level(log_level level);
-log_level log_get_level();
+/* init function */
+void log_init(const char *path, const char *filename, const char *file_extension);
 
 /* logging functions */
-void log_debug(const char* format, ...);
-void log_error(const char* format, ...);
+void log_print(const char *format, ...);
 
 /* cleanup / flush */
 void log_flush();
