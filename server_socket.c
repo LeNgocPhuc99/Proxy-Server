@@ -14,19 +14,13 @@
 #define MAX_LISTEN_BACKLOG 4096
 
 // info of incoming connection 
-struct server_socket_event_data 
-{
-    int epoll_fd;
-    char* backend_addr;
-    char* backend_port;
-};
 
 
-void handle_client_connection(int epoll_fd, int client_socket_fd, char* backend_host, char* backend_port) 
+void handle_client_connection(int epoll_fd, int client_socket_fd, char* backend_host, char* backend_port, struct webserver* webload_data) 
 {
 
     struct epoll_event_handler* client_socket_event_handler;
-    client_socket_event_handler = create_client_socket_handler(client_socket_fd, epoll_fd, backend_host, backend_port);
+    client_socket_event_handler = create_client_socket_handler(client_socket_fd, epoll_fd, backend_host, backend_port, webload_data);
    
     // EPOLLET =  edge-triggered mode
     // EPOLLOUT: client connection ready to write
@@ -57,7 +51,7 @@ void handle_server_socket_event(struct epoll_event_handler* self, uint32_t event
             }
         }
 
-        handle_client_connection(closure->epoll_fd, client_socket_fd, closure->backend_addr, closure->backend_port);
+        handle_client_connection(closure->epoll_fd, client_socket_fd, closure->backend_addr, closure->backend_port, closure->webload_data);
     }
 }
 
@@ -117,7 +111,7 @@ int create_and_bind(char* server_port)
 }
 
 
-struct epoll_event_handler* create_server_socket_handler(int epoll_fd, char* server_port, char* backend_addr, char* backend_port)
+struct epoll_event_handler* create_server_socket_handler(int epoll_fd, char* server_port, char* backend_addr, char* backend_port, struct webserver* webload_data)
 {
 
     int server_socket_fd;
@@ -130,6 +124,7 @@ struct epoll_event_handler* create_server_socket_handler(int epoll_fd, char* ser
     closure->epoll_fd = epoll_fd;
     closure->backend_addr = backend_addr;
     closure->backend_port = backend_port;
+    closure->webload_data = webload_data;
 
     struct epoll_event_handler* result = malloc(sizeof(struct epoll_event_handler));
     result->fd = server_socket_fd;

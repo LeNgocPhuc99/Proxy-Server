@@ -6,6 +6,8 @@
 #include "epoll_interface.h"
 #include "server_socket.h"
 
+#include "loadbalancer.h"
+
 
 
 
@@ -27,8 +29,12 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
+    struct webserver* webload_data;
+    webload_data->webaddr = backend_addr;
+    webload_data->count = 0;
+
     struct epoll_event_handler* server_socket_event_handler;
-    server_socket_event_handler = create_server_socket_handler(epoll_fd, server_port, backend_addr, backend_port);
+    server_socket_event_handler = create_server_socket_handler(epoll_fd, server_port, backend_addr, backend_port, webload_data);
 
     epoll_add_handler(epoll_fd, server_socket_event_handler, EPOLLIN | EPOLLET);
 
