@@ -31,7 +31,8 @@ int main(int argc, char* argv[])
 
     struct webserver* webload_data;
     webload_data->webaddr = backend_addr;
-    webload_data->count = 0;
+    webload_data->count_req = 0;
+    webload_data->count_res = 0;
 
     struct epoll_event_handler* server_socket_event_handler;
     server_socket_event_handler = create_server_socket_handler(epoll_fd, server_port, backend_addr, backend_port, webload_data);

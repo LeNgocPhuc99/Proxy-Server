@@ -21,12 +21,18 @@
 
 void really_close_client_socket(struct epoll_event_handler* self)
 {
+    struct client_socket_event_data* closure = malloc(sizeof(struct client_socket_event_data));
+    closure = (struct client_socket_event_data*)self->closure;
+
+    closure->webload_data->count_req += 1;
+    printf("Data at client socket: Web addr: %s, num_req: %d\n", closure->webload_data->webaddr, closure->webload_data->count_req);
+
     close(self->fd);
     free(self->closure);
     free(self);
 }
 
-struct epoll_event_handler* connect_to_backend(struct epoll_event_handler* client_handler, int epoll_fd, char* backend_host, char* backend_port)
+struct epoll_event_handler* connect_to_backend(struct epoll_event_handler* client_handler, int epoll_fd, char* backend_host, char* backend_port, struct webserver* webload_data)
 {
     struct addrinfo hints;
     memset(&hints, 0, sizeof(struct addrinfo));
@@ -76,7 +82,7 @@ struct epoll_event_handler* connect_to_backend(struct epoll_event_handler* clien
     freeaddrinfo(addrs);
 
     struct epoll_event_handler* backend_socket_event_handler;
-    backend_socket_event_handler = create_backend_socket_handler(backend_socket_fd, client_handler);
+    backend_socket_event_handler = create_backend_socket_handler(backend_socket_fd, client_handler, webload_data);
     epoll_add_handler(epoll_fd, backend_socket_event_handler, EPOLLIN | EPOLLRDHUP | EPOLLET);
 
     return backend_socket_event_handler;
@@ -292,8 +298,7 @@ void handle_client_socket_event(struct epoll_event_handler* self, uint32_t event
             //write(closure->backend_handler->fd, read_buffer, bytes_read);
             if(make_request(read_buffer, closure->backend_addr))
             {
-                closure->webload_data->count += 1;
-                printf("Web addr: %s, num_req: %d\n", closure->webload_data->webaddr, closure->webload_data->count);
+
                 write(closure->backend_handler->fd, read_buffer, bytes_read);
             }
             else
@@ -327,7 +332,7 @@ struct epoll_event_handler* create_client_socket_handler(int client_socket_fd, i
     result->handle = handle_client_socket_event;
     result->closure = closure;
 
-    closure->backend_handler = connect_to_backend(result, epoll_fd, backend_host, backend_port);
+    closure->backend_handler = connect_to_backend(result, epoll_fd, backend_host, backend_port, webload_data);
     closure->write_buffer = NULL;
     closure->backend_addr = backend_host;
     closure->webload_data = webload_data;
