@@ -56,7 +56,7 @@ void handle_server_socket_event(struct epoll_event_handler* self, uint32_t event
         }
         char cli_addr[INET_ADDRSTRLEN];
         strcpy(cli_addr, inet_ntoa(temp.sin_addr));
-        log_print("Client: %s make new connection\n", cli_addr);
+        log_print("Client with IP: %s and port: %d make new connection\n", cli_addr, (int)temp.sin_port);
 
         handle_client_connection(closure->epoll_fd, client_socket_fd, closure->backend_addr, closure->backend_port, closure->webload_data);
     }
