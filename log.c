@@ -112,7 +112,7 @@ static char *get_timestamp()
     char date_buf[50];
     time_t now = time(0);
     struct tm tm = *gmtime(&now);
-    strftime(date_buf, sizeof(date_buf), "%a, %d %b %Y %H:%M:%S %Z", &tm);
+    strftime(date_buf, sizeof(date_buf), "%a, %d %b %Y %H:%M:%S %Z/", &tm);
     return strdup(date_buf);
 }
 
@@ -126,6 +126,7 @@ void log_print(const char *format, ...)
     free(date_buffer);
     vfprintf(fp, format, args);
     va_end(args);
+    log_flush();
 }
 
 void log_flush()

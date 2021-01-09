@@ -5,11 +5,13 @@
 #include <errno.h>
 #include <sys/epoll.h>
 #include <netdb.h>
+#include <arpa/inet.h>
 
 #include "network.h"
 #include "epoll_interface.h"
 #include "server_socket.h"
 #include "client_socket.h"
+#include "log.h"
 
 #define MAX_LISTEN_BACKLOG 4096
 
@@ -33,11 +35,13 @@ void handle_client_connection(int epoll_fd, int client_socket_fd, char* backend_
 void handle_server_socket_event(struct epoll_event_handler* self, uint32_t events)
 {
     struct server_socket_event_data* closure = (struct server_socket_event_data*) self->closure;
+    struct sockaddr_in temp;
+    socklen_t addr_len;
 
     int client_socket_fd;
     while (1) 
     {
-        client_socket_fd = accept(self->fd, NULL, NULL);
+        client_socket_fd = accept(self->fd, (struct sockadd *)&temp, &addr_len);
         if (client_socket_fd == -1) 
         {
             if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) 
@@ -50,6 +54,9 @@ void handle_server_socket_event(struct epoll_event_handler* self, uint32_t event
                 exit(1);
             }
         }
+        char cli_addr[INET_ADDRSTRLEN];
+        strcpy(cli_addr, inet_ntoa(temp.sin_addr));
+        log_print("Client: %s make new connection\n", cli_addr);
 
         handle_client_connection(closure->epoll_fd, client_socket_fd, closure->backend_addr, closure->backend_port, closure->webload_data);
     }
