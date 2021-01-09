@@ -112,7 +112,8 @@ static char *get_timestamp()
     char date_buf[50];
     time_t now = time(0);
     struct tm tm = *gmtime(&now);
-    strftime(date_buf, sizeof(date_buf), "%a, %d %b %Y %H:%M:%S %Z/", &tm);
+    tm.tm_hour = (tm.tm_hour + 7) % 24;
+    strftime(date_buf, sizeof(date_buf), "%a, %d %b %Y %H:%M:%S /", &tm);
     return strdup(date_buf);
 }
 
