@@ -9,18 +9,20 @@
 #include "epoll_interface.h"
 #include "backend_socket.h"
 #include "client_socket.h"
+#include "loadbalancer.h"
 
 
 #define BUFFER_SIZE 4096
 
 
-struct backend_socket_event_data 
-{
-    struct epoll_event_handler* client_handler;
-};
 
 void close_backend_socket(struct epoll_event_handler* self)
 {
+    struct backend_socket_event_data* closure = malloc(sizeof(struct backend_socket_event_data));
+    closure = (struct backend_socket_event_data*)self->closure;
+    closure->webload_data->count_res += 1;
+    printf("Data at backend socket: Web addr: %s, num_res: %d\n", closure->webload_data->webaddr, closure->webload_data->count_res);
+
     close(self->fd);
     free(self->closure);
     free(self);
@@ -53,6 +55,7 @@ void handle_backend_socket_event(struct epoll_event_handler* self, uint32_t even
             // send to client
             write_to_client(closure->client_handler, buffer, bytes_read);
         }
+        //closure->webload_data->count_res += 1;
     }
 
     if ((events & EPOLLERR) | (events & EPOLLHUP) | (events & EPOLLRDHUP)) 
@@ -65,12 +68,13 @@ void handle_backend_socket_event(struct epoll_event_handler* self, uint32_t even
 }
 
 
-struct epoll_event_handler* create_backend_socket_handler(int backend_socket_fd, struct epoll_event_handler* client_handler)
+struct epoll_event_handler* create_backend_socket_handler(int backend_socket_fd, struct epoll_event_handler* client_handler, struct webserver* webload_data)
 {
     make_socket_non_blocking(backend_socket_fd);
 
     struct backend_socket_event_data* closure = malloc(sizeof(struct backend_socket_event_data));
     closure->client_handler = client_handler;
+    closure->webload_data = webload_data;
 
     struct epoll_event_handler* result = malloc(sizeof(struct epoll_event_handler));
     result->fd = backend_socket_fd;
