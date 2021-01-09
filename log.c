@@ -138,4 +138,13 @@ void log_close()
     if (fp != stdout)
         fclose(fp);
     fp = NULL;
+
+    if(logpath)
+        free(logpath);
+    
+    if(filename)
+        free(filename);
+
+    if(file_extn)
+        free(file_extn);
 }
