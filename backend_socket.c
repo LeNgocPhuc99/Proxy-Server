@@ -20,8 +20,8 @@ void close_backend_socket(struct epoll_event_handler* self)
 {
     struct backend_socket_event_data* closure = malloc(sizeof(struct backend_socket_event_data));
     closure = (struct backend_socket_event_data*)self->closure;
-    closure->webload_data->count_res += 1;
-    printf("Data at backend socket: Web addr: %s, num_res: %d\n", closure->webload_data->webaddr, closure->webload_data->count_res);
+    closure->webload_data->count_req1 -= 1;
+    printf("Data at backend socket: Web addr: %s, num_res: %d\n", closure->webload_data->webaddr1, closure->webload_data->count_req1);
 
     close(self->fd);
     free(self->closure);
@@ -41,13 +41,14 @@ void handle_backend_socket_event(struct epoll_event_handler* self, uint32_t even
         // make sure that read every thing
         while ((bytes_read = read(self->fd, buffer, BUFFER_SIZE)) != -1 && bytes_read != 0) 
         {
+            
             if (bytes_read == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) 
             {
                 return;
             }
-
             if (bytes_read == 0 || bytes_read == -1) 
             {
+                //printf("Free client from backend.\n");
                 close_client_socket(closure->client_handler);
                 close_backend_socket(self);
                 return;
@@ -55,11 +56,12 @@ void handle_backend_socket_event(struct epoll_event_handler* self, uint32_t even
             // send to client
             write_to_client(closure->client_handler, buffer, bytes_read);
         }
-        //closure->webload_data->count_res += 1;
     }
 
+    
     if ((events & EPOLLERR) | (events & EPOLLHUP) | (events & EPOLLRDHUP)) 
     {
+        //printf("Free client from backend.\n");
         close_client_socket(closure->client_handler);
         close_backend_socket(self);
         return;
