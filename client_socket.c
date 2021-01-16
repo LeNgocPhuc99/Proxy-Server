@@ -293,9 +293,11 @@ void handle_client_socket_event(struct epoll_event_handler* self, uint32_t event
                 return;
             }
             // check cookie && connect to backend
+
             // select backend-addr
-            char* backend_addr = closure->webload_data->webaddr1;
+            //char* backend_addr = closure->webload_data->webaddr1;
             
+            char* backend_addr = select_backend_addr(closure->webload_data);
             if(make_request(read_buffer, backend_addr))
             {
                 struct epoll_event_handler* backend_handler = connect_to_backend(self, closure->epoll_fd, backend_addr, closure->webload_data->backend_port, closure->webload_data);
@@ -308,19 +310,11 @@ void handle_client_socket_event(struct epoll_event_handler* self, uint32_t event
 
         }
     }
-    /*
-    if ((events & EPOLLERR) | (events & EPOLLHUP) | (events & EPOLLRDHUP)) 
-    {
-        printf("Close at handler\n");
-        close_client_socket(self);
-        return;
-    }
-    */
-
+ 
 }
 
 
-struct epoll_event_handler* create_client_socket_handler(int client_socket_fd, int epoll_fd, /* char* backend_host, char* backend_port,*/ struct webserver* webload_data)
+struct epoll_event_handler* create_client_socket_handler(int client_socket_fd, int epoll_fd, struct webserver* webload_data)
 {
     
     make_socket_non_blocking(client_socket_fd);

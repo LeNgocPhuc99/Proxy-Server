@@ -17,3 +17,15 @@ struct webserver* init_loadbalancer(char* backend_addr1, char* backend_addr2)
     
     return webload_data;
 }
+
+char* select_backend_addr(struct webserver* webload_data)
+{
+    if (webload_data->count_req1 >= webload_data->count_req2)
+    {
+        return webload_data->webaddr1;
+    }
+    else
+    {
+        return webload_data->webaddr2;
+    }
+}

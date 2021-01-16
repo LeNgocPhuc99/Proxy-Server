@@ -15,4 +15,3 @@ extern struct webserver* init_loadbalancer(char* backend_addr1, char* backend_ad
 
 extern char* select_backend_addr(struct webserver* webload_data);
 
-

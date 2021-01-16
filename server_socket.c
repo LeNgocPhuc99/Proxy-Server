@@ -109,7 +109,6 @@ int create_and_bind(char* server_port)
     return server_socket_fd;
 }
 
-
 struct epoll_event_handler* create_server_socket_handler(int epoll_fd, char* server_port, struct webserver* webload_data)
 {
 
