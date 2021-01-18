@@ -15,14 +15,13 @@
 
 #define MAX_LISTEN_BACKLOG 4096
 
-// info of incoming connection 
 
 
-void handle_client_connection(int epoll_fd, int client_socket_fd, char* backend_host, char* backend_port, struct webserver* webload_data) 
+void handle_client_connection(int epoll_fd, int client_socket_fd, struct webserver* webload_data) 
 {
 
     struct epoll_event_handler* client_socket_event_handler;
-    client_socket_event_handler = create_client_socket_handler(client_socket_fd, epoll_fd, backend_host, backend_port, webload_data);
+    client_socket_event_handler = create_client_socket_handler(client_socket_fd, epoll_fd, webload_data);
    
     // EPOLLET =  edge-triggered mode
     // EPOLLOUT: client connection ready to write
@@ -58,7 +57,7 @@ void handle_server_socket_event(struct epoll_event_handler* self, uint32_t event
         strcpy(cli_addr, inet_ntoa(temp.sin_addr));
         log_print("Client with IP: %s and port: %d make new connection\n", cli_addr, (int)temp.sin_port);
 
-        handle_client_connection(closure->epoll_fd, client_socket_fd, closure->backend_addr, closure->backend_port, closure->webload_data);
+        handle_client_connection(closure->epoll_fd, client_socket_fd, closure->webload_data);
     }
 }
 
@@ -117,8 +116,7 @@ int create_and_bind(char* server_port)
     return server_socket_fd;
 }
 
-
-struct epoll_event_handler* create_server_socket_handler(int epoll_fd, char* server_port, char* backend_addr, char* backend_port, struct webserver* webload_data)
+struct epoll_event_handler* create_server_socket_handler(int epoll_fd, char* server_port, struct webserver* webload_data)
 {
 
     int server_socket_fd;
@@ -129,8 +127,6 @@ struct epoll_event_handler* create_server_socket_handler(int epoll_fd, char* ser
 
     struct server_socket_event_data* closure = malloc(sizeof(struct server_socket_event_data));
     closure->epoll_fd = epoll_fd;
-    closure->backend_addr = backend_addr;
-    closure->backend_port = backend_port;
     closure->webload_data = webload_data;
 
     struct epoll_event_handler* result = malloc(sizeof(struct epoll_event_handler));

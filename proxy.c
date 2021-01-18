@@ -19,8 +19,8 @@ int main(int argc, char* argv[])
         exit(1);
     }
     char* server_port = argv[1];
-    char* backend_addr = argv[2];
-    char* backend_port = argv[3];
+    char* backend_addr1 = argv[2];
+    char* backend_addr2 = argv[3];
 
     int epoll_fd = epoll_create1(0);
     if (epoll_fd == -1) 
@@ -30,13 +30,13 @@ int main(int argc, char* argv[])
     }
     log_init(".", "loadbalancer", "log");
 
-    struct webserver* webload_data = malloc(sizeof * webload_data);
-    webload_data->webaddr = backend_addr;
-    webload_data->count_req = 0;
-    webload_data->count_res = 0;
+    struct webserver* webload_data;
+    webload_data = init_loadbalancer(backend_addr1, backend_addr2);
+
+    //webload_data->count_res = 0;
 
     struct epoll_event_handler* server_socket_event_handler;
-    server_socket_event_handler = create_server_socket_handler(epoll_fd, server_port, backend_addr, backend_port, webload_data);
+    server_socket_event_handler = create_server_socket_handler(epoll_fd, server_port, webload_data);
 
     epoll_add_handler(epoll_fd, server_socket_event_handler, EPOLLIN | EPOLLET);
 

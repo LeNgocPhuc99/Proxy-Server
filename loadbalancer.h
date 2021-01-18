@@ -1,11 +1,17 @@
 struct webserver
 {
-    char* webaddr;
-    int count_req;
-    int count_res;
+    // webserver 1
+    char* webaddr1;
+    int count_req1;
+    
+    // webserver 2 
+    char* webaddr2;
+    int count_req2;
+
+    char* backend_port;
 };
 
-struct loadbalancer_data
-{
-    struct webserver* data[3];
-};
+extern struct webserver* init_loadbalancer(char* backend_addr1, char* backend_addr2);
+
+extern char* select_backend_addr(struct webserver* webload_data);
+
