@@ -123,7 +123,7 @@ bool make_request(char* buffer, char* backend_addr)
         entry = strtok(NULL, "/");
         strcpy(host, entry);
 
-        if(strcmp(host, "192.168.54.85") != 0)
+        if(strcmp(host, "172.16.45.130") != 0)
         {
             return flag;
         }

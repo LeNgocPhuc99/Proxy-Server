@@ -60,6 +60,13 @@ void handle_backend_socket_event(struct epoll_event_handler* self, uint32_t even
         }
         //closure->webload_data->count_res += 1;
 
+        
+    }
+
+    
+    if ((events & EPOLLERR) | (events & EPOLLHUP) | (events & EPOLLRDHUP)) 
+    {
+        // Print to the log file
         struct sockaddr_in raw_addr;
         socklen_t raw_addr_size = sizeof(struct sockaddr_in);
         // Get client address
@@ -72,11 +79,7 @@ void handle_backend_socket_event(struct epoll_event_handler* self, uint32_t even
         getpeername(self->fd, (struct sockaddr *)&raw_addr, &raw_addr_size);
         strcpy(server_ip, inet_ntoa(raw_addr.sin_addr));
         log_print("Server with IP: %s finished the request of Client with IP: %s and Port: %d\n", server_ip, client_ip, client_port);
-    }
 
-    
-    if ((events & EPOLLERR) | (events & EPOLLHUP) | (events & EPOLLRDHUP)) 
-    {
         //printf("Free client from backend.\n");
         close_client_socket(closure->client_handler);
         close_backend_socket(self);
