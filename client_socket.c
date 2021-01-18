@@ -98,15 +98,20 @@ bool make_request(char* buffer, char* backend_addr)
     bool flag = false;
     // Search for cookie in http header
     char *needle = strstr(buffer, "Cookie: ");
-    char cookie[25];
+    char *cookie = NULL;
     if(needle != NULL)
     {
-        strcpy(cookie, needle);
+        cookie = strdup(needle);
         char *token;
         token = strtok(cookie, "=");
         token = strtok(NULL, "=");
         strcpy(cookie, token);
         cookie[strlen(cookie) - 3] = '\0';
+    }
+    // If cookie is present, send to that server
+    if(cookie != NULL)
+    {
+        backend_addr = cookie;
     }
     sscanf(buffer, "%s %s %s", command, url, http);
     if(strcmp(command,"GET") == 0)
@@ -118,7 +123,7 @@ bool make_request(char* buffer, char* backend_addr)
         entry = strtok(NULL, "/");
         strcpy(host, entry);
 
-        if(strcmp(host, "172.16.45.130") != 0)
+        if(strcmp(host, "192.168.54.85") != 0)
         {
             return flag;
         }

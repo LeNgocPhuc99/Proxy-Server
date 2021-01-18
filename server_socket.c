@@ -34,13 +34,14 @@ void handle_client_connection(int epoll_fd, int client_socket_fd, struct webserv
 void handle_server_socket_event(struct epoll_event_handler* self, uint32_t events)
 {
     struct server_socket_event_data* closure = (struct server_socket_event_data*) self->closure;
-    struct sockaddr_in temp;
-    socklen_t addr_len;
+
 
     int client_socket_fd;
     while (1) 
     {
-        client_socket_fd = accept(self->fd, (struct sockadd *)&temp, &addr_len);
+        struct sockaddr *temp = calloc(1, sizeof *temp);
+        socklen_t addr_len;
+        client_socket_fd = accept(self->fd, temp, &addr_len);
         if (client_socket_fd == -1) 
         {
             if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) 
@@ -54,9 +55,10 @@ void handle_server_socket_event(struct epoll_event_handler* self, uint32_t event
             }
         }
         char cli_addr[INET_ADDRSTRLEN];
-        strcpy(cli_addr, inet_ntoa(temp.sin_addr));
-        log_print("Client with IP: %s and port: %d make new connection\n", cli_addr, (int)temp.sin_port);
-
+        struct sockaddr_in *peer_addr = (struct sockaddr_in*)temp;
+        strcpy(cli_addr, inet_ntoa(peer_addr->sin_addr));
+        log_print("Client with IP: %s and port: %d make new connection\n", cli_addr, (int)peer_addr->sin_port);
+        free(temp);
         handle_client_connection(closure->epoll_fd, client_socket_fd, closure->webload_data);
     }
 }
