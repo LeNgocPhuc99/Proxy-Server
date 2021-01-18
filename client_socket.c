@@ -100,7 +100,18 @@ bool make_request(char* buffer, char* backend_addr)
     char *entry;
 
     bool flag = false;
-
+    // Search for cookie in http header
+    char *needle = strstr(buffer, "Cookie: ");
+    char cookie[25];
+    if(needle != NULL)
+    {
+        strcpy(cookie, needle);
+        char *token;
+        token = strtok(cookie, "=");
+        token = strtok(NULL, "=");
+        strcpy(cookie, token);
+        cookie[strlen(cookie) - 3] = '\0';
+    }
     sscanf(buffer, "%s %s %s", command, url, http);
     if(strcmp(command,"GET") == 0)
     {
