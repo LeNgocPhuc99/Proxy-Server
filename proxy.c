@@ -7,7 +7,7 @@
 #include "server_socket.h"
 
 #include "loadbalancer.h"
-
+#include "log.h"
 
 
 
@@ -28,6 +28,7 @@ int main(int argc, char* argv[])
         perror("Couldn't create epoll FD");
         exit(1);
     }
+    log_init(".", "loadbalancer", "log");
 
     struct webserver* webload_data;
     webload_data = init_loadbalancer(backend_addr1, backend_addr2);
