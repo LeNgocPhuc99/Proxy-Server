@@ -108,6 +108,7 @@ bool make_request(char* buffer, char** backend_addr)
     // Search for cookie in http header
     char *needle = strstr(buffer, "Cookie: ");
     char *cookie = NULL;
+    // If cookie is present, send to that server
     if(needle != NULL)
     {
         cookie = strdup(needle);
@@ -115,13 +116,10 @@ bool make_request(char* buffer, char** backend_addr)
         token = strtok(cookie, "=");
         token = strtok(NULL, "=");
         strcpy(cookie, token);
-        cookie[strlen(cookie) - 3] = '\0';
-    }
-    // If cookie is present, send to that server
-    if(cookie != NULL)
-    {
+        cookie[strlen(cookie) - 4] = '\0';
         *backend_addr = cookie;
     }
+    
     sscanf(buffer, "%s %s %s", command, url, http);
     if(strcmp(command,"GET") == 0)
     {
@@ -322,7 +320,6 @@ void handle_client_socket_event(struct epoll_event_handler* self, uint32_t event
             char* backend_addr = select_backend_addr(closure->webload_data);
             if(make_request(read_buffer, &backend_addr))
             {
-                printf("%s\n", backend_addr);
                 struct epoll_event_handler* backend_handler = connect_to_backend(self, closure->epoll_fd, backend_addr, closure->webload_data->backend_port, closure->webload_data);
                 write(backend_handler->fd, read_buffer, bytes_read);
             }
