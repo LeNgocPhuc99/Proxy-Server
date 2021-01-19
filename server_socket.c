@@ -40,7 +40,7 @@ void handle_server_socket_event(struct epoll_event_handler* self, uint32_t event
     while (1) 
     {
         struct sockaddr temp;
-        socklen_t addr_len;
+        socklen_t addr_len = sizeof(struct sockaddr);
         client_socket_fd = accept(self->fd, &temp, &addr_len);
         if (client_socket_fd == -1) 
         {
