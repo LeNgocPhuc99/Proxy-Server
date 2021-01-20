@@ -5,7 +5,6 @@ OBJ_FILES := $(patsubst %.c,%.o,$(C_FILES))
 CC := gcc
 
 all: proxy
-	
 
 clean:
 	rm $(OBJ_FILES)

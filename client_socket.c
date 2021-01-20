@@ -76,20 +76,11 @@ struct epoll_event_handler* connect_to_backend(struct epoll_event_handler* clien
     freeaddrinfo(addrs);
 
     struct epoll_event_handler* backend_socket_event_handler;
-    backend_socket_event_handler = create_backend_socket_handler(backend_socket_fd, client_handler, webload_data, backend_host);
+    backend_socket_event_handler = create_backend_socket_handler(backend_socket_fd, client_handler, webload_data);
     epoll_add_handler(epoll_fd, backend_socket_event_handler, EPOLLIN | EPOLLRDHUP | EPOLLET);
 
-    if(strcmp(backend_host, webload_data->webaddr1 ) == 0)
-    {
-        webload_data->count_req1 += 1;
-        printf("Data at client socket: Web addr: %s, num_req: %d\n", webload_data->webaddr1, webload_data->count_req1);
-    }
-    else if (strcmp(backend_host, webload_data->webaddr2) == 0)
-    {
-        webload_data->count_req2 += 1;
-        printf("Data at client socket: Web addr: %s, num_req: %d\n", webload_data->webaddr2, webload_data->count_req2);
-    }
-    
+    webload_data->count_req1 += 1;
+    printf("Data at client socket: Web addr: %s, num_req: %d\n", webload_data->webaddr1, webload_data->count_req1);
     return backend_socket_event_handler;
 }
 
