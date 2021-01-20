@@ -36,6 +36,7 @@ struct epoll_event_handler* connect_to_backend(struct epoll_event_handler* clien
     int getaddrinfo_error;
     struct addrinfo* addrs;
     getaddrinfo_error = getaddrinfo(backend_host, backend_port, &hints, &addrs);
+    free(backend_host);
     if (getaddrinfo_error != 0) 
     {
         if (getaddrinfo_error == EAI_SYSTEM) 
@@ -98,17 +99,23 @@ bool make_request(char* buffer, char** backend_addr)
     bool flag = false;
     // Search for cookie in http header
     char *needle = strstr(buffer, "Cookie: ");
-    char *cookie = NULL;
+    char cookie[40];
     // If cookie is present, send to that server
     if(needle != NULL)
     {
-        cookie = strdup(needle);
+        for (size_t i = 0; i < 40; i++)
+        {
+            if (needle[i] == '\r')
+            {
+                break;
+            }
+            cookie[i] = needle[i];
+        }
         char *token;
         token = strtok(cookie, "=");
         token = strtok(NULL, "=");
         strcpy(cookie, token);
-        cookie[strlen(cookie) - 4] = '\0';
-        *backend_addr = cookie;
+        *backend_addr = strdup(cookie);
     }
     
     sscanf(buffer, "%s %s %s", command, url, http);
