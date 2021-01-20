@@ -19,6 +19,10 @@ void epoll_add_handler(int epoll_fd, struct epoll_event_handler* handler, uint32
     }
 }
 
+void epoll_remove_handler(int epoll_fd, struct epoll_event_handler* handler)
+{
+    epoll_ctl(epoll_fd, EPOLL_CTL_DEL, handler->fd, NULL);
+}
 
 void epoll_reactor_loop(int epoll_fd)
 {

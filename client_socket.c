@@ -36,7 +36,6 @@ struct epoll_event_handler* connect_to_backend(struct epoll_event_handler* clien
     int getaddrinfo_error;
     struct addrinfo* addrs;
     getaddrinfo_error = getaddrinfo(backend_host, backend_port, &hints, &addrs);
-    free(backend_host);
     if (getaddrinfo_error != 0) 
     {
         if (getaddrinfo_error == EAI_SYSTEM) 
@@ -70,23 +69,33 @@ struct epoll_event_handler* connect_to_backend(struct epoll_event_handler* clien
 
     if (addrs_iter == NULL) 
     {
-        fprintf(stderr, "Couldn't connect to backend");
+        fprintf(stderr, "Couldn't connect to backend\n");
         exit(1);
     }
 
     freeaddrinfo(addrs);
 
     struct epoll_event_handler* backend_socket_event_handler;
-    backend_socket_event_handler = create_backend_socket_handler(backend_socket_fd, client_handler, webload_data);
+    backend_socket_event_handler = create_backend_socket_handler(backend_socket_fd, client_handler, webload_data, backend_host);
     epoll_add_handler(epoll_fd, backend_socket_event_handler, EPOLLIN | EPOLLRDHUP | EPOLLET);
 
-    webload_data->count_req1 += 1;
-    printf("Data at client socket: Web addr: %s, num_req: %d\n", webload_data->webaddr1, webload_data->count_req1);
+    if(strcmp(backend_host, webload_data->webaddr1 ) == 0)
+    {
+        webload_data->count_req1 += 1;
+        printf("Data at client socket: Web addr: %s, num_req: %d\n", webload_data->webaddr1, webload_data->count_req1);
+    }
+    else if (strcmp(backend_host, webload_data->webaddr2) == 0)
+    {
+        webload_data->count_req2 += 1;
+        printf("Data at client socket: Web addr: %s, num_req: %d\n", webload_data->webaddr2, webload_data->count_req2);
+    }
+    
+    
     return backend_socket_event_handler;
 }
 
 
-bool make_request(char* buffer, char** backend_addr)
+bool make_request(char* buffer, char* backend_addr)
 {
 
     char command[BUFFER_SIZE];                  // GET
@@ -99,25 +108,21 @@ bool make_request(char* buffer, char** backend_addr)
     bool flag = false;
     // Search for cookie in http header
     char *needle = strstr(buffer, "Cookie: ");
-    char cookie[40];
-    // If cookie is present, send to that server
+    char *cookie = NULL;
     if(needle != NULL)
     {
-        for (size_t i = 0; i < 40; i++)
-        {
-            if (needle[i] == '\r')
-            {
-                break;
-            }
-            cookie[i] = needle[i];
-        }
+        cookie = strdup(needle);
         char *token;
         token = strtok(cookie, "=");
         token = strtok(NULL, "=");
         strcpy(cookie, token);
-        *backend_addr = strdup(cookie);
+        cookie[strlen(cookie) - 3] = '\0';
     }
-    
+    // If cookie is present, send to that server
+    if(cookie != NULL)
+    {
+        backend_addr = cookie;
+    }
     sscanf(buffer, "%s %s %s", command, url, http);
     if(strcmp(command,"GET") == 0)
     {
@@ -135,7 +140,7 @@ bool make_request(char* buffer, char** backend_addr)
         else
         {
             bzero(host, BUFFER_SIZE);
-            strcpy(host, *backend_addr);
+            strcpy(host, backend_addr);
         }
         entry = strtok(temp, "//");
         entry = strtok(NULL, "/");
@@ -315,8 +320,12 @@ void handle_client_socket_event(struct epoll_event_handler* self, uint32_t event
             }
             // check cookie && connect to backend
 
+            // select backend-addr
+            //char* backend_addr = closure->webload_data->webaddr1;
+            printf("req_count1: %d, req_count2: %d\n", closure->webload_data->count_req1, closure->webload_data->count_req2);
             char* backend_addr = select_backend_addr(closure->webload_data);
-            if(make_request(read_buffer, &backend_addr))
+            printf("Backend addr: %s\n", backend_addr);
+            if(make_request(read_buffer, backend_addr))
             {
                 struct epoll_event_handler* backend_handler = connect_to_backend(self, closure->epoll_fd, backend_addr, closure->webload_data->backend_port, closure->webload_data);
                 write(backend_handler->fd, read_buffer, bytes_read);
@@ -346,8 +355,6 @@ struct epoll_event_handler* create_client_socket_handler(int client_socket_fd, i
 
     
     closure->write_buffer = NULL;
-    //closure->backend_host = backend_host;
-    //closure->backend_port = backend_port;
     closure->epoll_fd = epoll_fd;
     closure->webload_data = webload_data;
 

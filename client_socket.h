@@ -14,8 +14,6 @@ struct client_socket_event_data
     //struct epoll_event_handler* backend_handler;
     struct data_buffer_entry* write_buffer;
     int epoll_fd;
-    //char* backend_host;
-    //char* backend_port;
     struct webserver* webload_data;
 };
 
