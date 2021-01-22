@@ -12,6 +12,7 @@
 #include "server_socket.h"
 #include "client_socket.h"
 #include "log.h"
+#include "loadbalancer.h"
 
 #define MAX_LISTEN_BACKLOG 4096
 
@@ -48,7 +49,7 @@ void handle_server_socket_event(struct epoll_event_handler* self, uint32_t event
             {
                 break;
             } 
-            else 
+            else    
             {
                 perror("Could not accept");
                 exit(1);
@@ -59,6 +60,9 @@ void handle_server_socket_event(struct epoll_event_handler* self, uint32_t event
         strcpy(cli_addr, inet_ntoa(peer_addr->sin_addr));
         log_print("Client with IP: %s and port: %d make new connection\n", cli_addr, (int)peer_addr->sin_port);
         
+        // send log
+        send_log("Client with IP: %s and port: %d make new connection\n", cli_addr, (int)peer_addr->sin_port);
+
         handle_client_connection(closure->epoll_fd, client_socket_fd, closure->webload_data);
     }
 }
