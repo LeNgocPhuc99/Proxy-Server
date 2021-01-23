@@ -1,12 +1,20 @@
 #include <assert.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "log.h"
-
+#define PORT 50000
+#define BUFFER 256
+#define SERVER_IP "127.0.0.1"
 #define SEPARATOR '/'
 #define MAX_PATH_LENGTH 512
 
@@ -128,6 +136,43 @@ void log_print(const char *format, ...)
     vfprintf(fp, format, args);
     va_end(args);
     log_flush();
+}
+
+void log_sync(const char *format, ...)
+{
+    int waittime = 50;
+    int new_fd;
+    struct sockaddr_in serveraddr;    
+
+    va_list args;
+    va_start(args, format);
+
+    new_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if(new_fd < 0)
+    {
+        perror("create socket to sync");
+        return;
+    }
+    
+    serveraddr.sin_family = AF_INET;
+    serveraddr.sin_addr.s_addr = inet_addr(SERVER_IP);
+    serveraddr.sin_port = htons(PORT);
+    bzero(&serveraddr.sin_zero, 8);
+
+    socklen_t sock_len;
+    sock_len = sizeof(serveraddr);
+    if(connect(new_fd, (struct sockaddr *)&serveraddr, sock_len) < 0)
+    {
+        perror("connect to sync");
+        return;
+    }
+    
+    char log[BUFFER];
+    vsprintf(log, format, args);
+    send(new_fd, log, BUFFER, 0);
+    va_end(args);
+    wait(&waittime);
+    close(new_fd);
 }
 
 void log_flush()

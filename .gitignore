@@ -54,3 +54,4 @@ dkms.conf
 # Program
 proxy
 *.log
+sync_server

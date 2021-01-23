@@ -91,7 +91,7 @@ void handle_backend_socket_event(struct epoll_event_handler* self, uint32_t even
         log_print("Server with IP: %s finished the request of Client with IP: %s and Port: %d\n", server_ip, client_ip, client_port);
 
         // send_log
-        send_log("Server with IP: %s finished the request of Client with IP: %s and Port: %d\n", server_ip, client_ip, client_port);
+        log_sync("Server with IP: %s finished the request of Client with IP: %s and Port: %d\n", server_ip, client_ip, client_port);
 
         //printf("Free client from backend.\n");
         close_client_socket(closure->client_handler);
