@@ -1,21 +1,42 @@
+#include <arpa/inet.h>
+#include <netinet/in.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#include <time.h>
+#include <unistd.h>
 
 #define PORT 50000
 #define LENQUEUE 5
 #define BUFFER 256
 #define SERVER_IP "127.0.0.1"
+#define MAX_PATH_LENGTH 512
+static FILE *fp = NULL;
+void sync_init()
+{
+    // Create tag name
+    char tag[20] = {0};
+    time_t now;
+    time(&now);
+    strftime(tag, 20, "%y%m%d", localtime(&now));
+    char fullpath[MAX_PATH_LENGTH];
+    sprintf(fullpath, "%s%s_%s.%s", "./", "loadbalancer", tag, "log");
+    fp = fopen(fullpath, "a");
+    /* Khong mo file duoc thi in ra stdout */
+    if (fp == NULL)
+    {
+        perror("opening log file");
+        fp = stdout;
+    }
+}
 
 int main(int argc, char const *argv[])
 {
+    sync_init();
     int waittime = 50;
     int sockfd, newsock;
     char sendmess[BUFFER], recvmess[BUFFER];
@@ -45,26 +66,26 @@ int main(int argc, char const *argv[])
         exit(1);
     }
     printf("Bind successfull!\n");
-   
+
     listen(sockfd, LENQUEUE);
 
     while (1)
     {
         clilen = sizeof(cliaddr);
-        newsock = accept(sockfd, (struct sockaddr *)& cliaddr, &clilen);
-        if(newsock < 0)
+        newsock = accept(sockfd, (struct sockaddr *)&cliaddr, &clilen);
+        if (newsock < 0)
         {
             fprintf(stderr, "server-accept() error!! \n");
-            exit(1);
+            break;
         }
-        else
-        {
-            printf("Accepted\n");
-        }
+        
         recv(newsock, recvmess, BUFFER, 0);
         printf("Received: %s\n", recvmess);
+        fputs(recvmess, fp);
+        fflush(fp);
         close(newsock);
     }
     close(sockfd);
+    fclose(fp);
     return 0;
 }
